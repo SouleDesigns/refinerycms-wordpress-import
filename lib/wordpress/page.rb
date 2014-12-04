@@ -41,7 +41,7 @@ module Refinery
       end
 
       def content_formatted
-         formatted = remove_inline_styles(format_paragraphs(format_shortcodes(format_base64_images(content, post_id))))
+         formatted = format_galleries(remove_inline_styles(format_paragraphs(format_shortcodes(format_base64_images(content, post_id)))))
 
         # # remove all tags inside <pre> that simple_format created
         # # TODO: replace format_paragraphs with a method, that ignores pre-tags
@@ -138,6 +138,22 @@ module Refinery
         # preprocess to replace badly formatted shortcodes with syntactically correct shortcodes
         # [youtube id width height] -> [youtube id="id" width="width" height="height"]
         Shortcode.process(text.gsub(/\[youtube\s+?(\w*?)\s+?(\d+)\s+?(\d+)\s*\]/, '[youtube id="\1" width="\2" height="\3"]'))
+      end
+      
+      # Replace gallery shortcode syntax [gallery ids="XXX,XXX"] with post_id="XXX" post_id="XXX" which
+      # will be used when parsing images later on as attachments are processed
+      def format_galleries(text)
+        text = ''.html_safe if text.nil?
+          
+        expression = /\[gallery ids=".*"\]/
+			  digits = /(\d{2,4})/
+			  formatted = ''
+			  sub_sample = text.slice(expression)
+        unless sub_sample.nil?
+          sub_sample.scan(digits) {|m|  formatted += "post_id=\"#{m[0]}\" "}
+          text.gsub!(expression, formatted)
+        end
+        text
       end
 
 #       Replace bas64 encoded images with a file reference. Write the file out

@@ -17,12 +17,24 @@ module Refinery
         node.xpath("description").text
       end
 
+      def excerpt
+        node.xpath("excerpt:encoded").text
+      end
+      
       def file_name
         url.split('/').last
       end
 
       def post_date
         DateTime.parse node.xpath("wp:post_date").text
+      end
+      
+      def post_id
+      	node.xpath("wp:post_id").text
+      end
+      
+      def post_id_pattern 	
+      	/post_id="#{post_id}"/
       end
 
       def url
@@ -107,8 +119,19 @@ module Refinery
 
       def replace_url_in_blog_posts(new_url)
         Refinery::Blog::Post.all.each do |post|
+        
           if (! post.body.empty?) && post.body.include?(url)
             post.body = post.body.gsub(url_pattern, new_url)
+            post.save!
+          end
+          if (! post.body.empty?) && post.body.include?(post_id)
+
+            # TODO: change this to suit whatever image format is desired within the posts...
+            img_html = "<figure class=\"aligncenter\"><img class=\"img-responsive size-medium\" src=\"#{new_url}\" alt=\"#{title}\">"
+            img_html += "<figcaption>#{excerpt}</figcaption>" unless excerpt.nil?
+            img_html += '</figure>'
+
+          	post.body = post.body.gsub(post_id_pattern, img_html)
             post.save!
           end
         end

@@ -5,6 +5,9 @@ namespace :wordpress do
   BLOG_TABLES  = %w(ActsAsTaggableOn::Tag Refinery::Blog::Post Refinery::Blog::Category)
   CMS_TABLES   = %w(Refinery::Page)
   MEDIA_TABLES = %w(Refinery::Image Refinery::Resource)
+  only_published = nil
+  silent = nil
+  allow_duplicate_titles = nil
 
 # ------------------------------------- Begin blog processing tasks --------------------------------------------------
  desc 'Reset the blog tables for a clean import'
@@ -150,9 +153,9 @@ namespace :wordpress do
   def init
     # Steps common to all tasks
     Rake::Task["environment"].invoke
-    if params[:file_name].nil?
-      raise "Please specify file_name as a rake parameter (use [filename] after task_name...)"
-    end
+    #if params[:file_name].nil?
+    #  raise "Please specify file_name as a rake parameter (use [filename] after task_name...)"
+    #end
     # Check environment variables
     only_published =         ENV['ONLY_PUBLISHED'].present?
     allow_duplicate_titles = ENV['ALLOW_DUPLICATES'].present?
@@ -160,7 +163,7 @@ namespace :wordpress do
   end
 
   def clear_tables(tables, offset=0)
-
+	silent = false
     tables.each do |table_name|
       # deletes dependent records as well.
       puts "Deleting records with ids>#{offset} from #{table_name} ..." unless silent
