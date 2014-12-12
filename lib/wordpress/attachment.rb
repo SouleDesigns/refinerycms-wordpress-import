@@ -32,6 +32,10 @@ module Refinery
       def post_id
       	node.xpath("wp:post_id").text
       end
+
+      def post_parent
+        node.xpath("wp:post_parent").text.to_i
+      end
       
       def post_id_pattern 	
       	/post_id="#{post_id}"/
@@ -119,21 +123,36 @@ module Refinery
 
       def replace_url_in_blog_posts(new_url)
         Refinery::Blog::Post.all.each do |post|
-        
-          if (! post.body.empty?) && post.body.include?(url)
-            post.body = post.body.gsub(url_pattern, new_url)
-            post.save!
-          end
-          if (! post.body.empty?) && post.body.include?(post_id)
+
+          # Assure body exists before doing any replacements!
+          if (! post.body.empty?)
+
+            # Replace just the image url
+            if (post.body.include?(url))
+              post.body = post.body.gsub(url_pattern, new_url)
+              post.save!
+            end
 
             # TODO: change this to suit whatever image format is desired within the posts...
             img_html = "<figure class=\"aligncenter\"><img class=\"img-responsive size-medium\" src=\"#{new_url}\" alt=\"#{title}\">"
             img_html += "<figcaption>#{excerpt}</figcaption>" unless excerpt.nil?
             img_html += '</figure>'
+            gallery_tag = '[gallery]'
 
-          	post.body = post.body.gsub(post_id_pattern, img_html)
-            post.save!
+            # Replace post_id="XXX" tag with image html
+            if (post.body.include?(post_id))
+              post.body = post.body.gsub(post_id_pattern, img_html)
+              post.save!
+            end
+
+            # Replace [gallery] keyword with image html, append keyword to end of
+            # html in case future attachments link to this same post
+            if (post.post_id == self.post_parent && post.body.include?(gallery_tag))
+              post.body = post.body.gsub(gallery_tag, "#{img_html} #{gallery_tag}")
+              post.save!
+            end
           end
+
         end
       end
 
