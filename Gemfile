@@ -10,7 +10,8 @@ gem 'globalize'
 
 gem 'shortcode', '0.1.2'
 
-gem 'sqlite3'
+#gem 'sqlite3'
+gem 'pg', '0.17.1'
 
 group :development, :test do
   gem 'factory_girl_rails'

@@ -81,6 +81,12 @@ module Refinery
         image.image_url = url
         image.save!
 
+        # Keep halfing until under 350K
+        while (image.image.size > 350000) do
+          image.image.process!(:resize, '75x75%')
+          image.save!
+        end
+        puts "Processed #{image.url}"
         @refinery_image = image
         image
       end
@@ -134,10 +140,12 @@ module Refinery
             end
 
             # TODO: change this to suit whatever image format is desired within the posts...
-            img_html = "<figure class=\"aligncenter\"><img class=\"img-responsive size-medium\" src=\"#{new_url}\" alt=\"#{title}\">"
+            img_html = "<figure class=\"aligncenter\">"
+            img_html += "<img src=\"#{new_url}\" class=\"img-responsive\" alt=\"#{title}\" />"
             img_html += "<figcaption>#{excerpt}</figcaption>" unless excerpt.nil?
             img_html += '</figure>'
             gallery_tag = '[gallery]'
+
 
             # Replace post_id="XXX" tag with image html
             if (post.body.include?(post_id))
@@ -147,7 +155,7 @@ module Refinery
 
             # Replace [gallery] keyword with image html, append keyword to end of
             # html in case future attachments link to this same post
-            if (post.post_id == self.post_parent && post.body.include?(gallery_tag))
+            if (post.id == self.post_parent && post.body.include?(gallery_tag))
               post.body = post.body.gsub(gallery_tag, "#{img_html} #{gallery_tag}")
               post.save!
             end

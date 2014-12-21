@@ -69,6 +69,7 @@ module Refinery
             :draft => draft?, :published_at => post_date,
             :user_id => user.id, :tag_list => tag_list, :meta_description => meta_description
           post.created_at = post_date
+          post.id = post_id  # Dangerous here because there is no offset, could collide with existing id!
           post.save!
 
           ::Refinery::Blog::Post.transaction do
